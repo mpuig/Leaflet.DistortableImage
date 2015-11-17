@@ -44,9 +44,9 @@ L.DistortableImage.Edit = L.Handler.extend({
 			this._rotateHandles.addLayer(new L.RotateHandle(overlay, i));
 		}
 
-		this._handles = { 
-			'lock':		 this._lockHandles, 
-			'distort': this._distortHandles, 
+		this._handles = {
+			'lock':		 this._lockHandles,
+			'distort': this._distortHandles,
 			'rotate':	this._rotateHandles
 		};
 
@@ -92,16 +92,16 @@ L.DistortableImage.Edit = L.Handler.extend({
 	_rotateBy: function(angle) {
 		var overlay = this._overlay,
 			map = overlay._map,
-			center = map.latLngToLayerPoint(overlay.getCenter()),
+			center = map.project(overlay.getCenter()),
 			i, p, q;
 
 		for (i = 0; i < 4; i++) {
-			p = map.latLngToLayerPoint(overlay._corners[i]).subtract(center);
+			p = map.project(overlay._corners[i]).subtract(center);
 			q = new L.Point(
 				Math.cos(angle)*p.x - Math.sin(angle)*p.y,
 				Math.sin(angle)*p.x + Math.cos(angle)*p.y
 			);
-			overlay._corners[i] = map.layerPointToLatLng(q.add(center));
+			overlay._corners[i] = map.unproject(q.add(center));
 		}
 
 		overlay._reset();
@@ -110,15 +110,15 @@ L.DistortableImage.Edit = L.Handler.extend({
 	_scaleBy: function(scale) {
 		var overlay = this._overlay,
 			map = overlay._map,
-			center = map.latLngToLayerPoint(overlay.getCenter()),
+			center = map.project(overlay.getCenter()),
 			i, p;
 
 		for (i = 0; i < 4; i++) {
-			p = map.latLngToLayerPoint(overlay._corners[i])
+			p = map.project(overlay._corners[i])
 				.subtract(center)
 				.multiplyBy(scale)
 				.add(center);
-			overlay._corners[i] = map.layerPointToLatLng(p);
+			overlay._corners[i] = map.unproject(p);
 		}
 
 		overlay._reset();
@@ -134,9 +134,9 @@ L.DistortableImage.Edit = L.Handler.extend({
 		/* Hide toolbars while dragging; click will re-show it */
 		this.dragging.on('dragstart', this._hideToolbar, this);
 
-		/* 
+		/*
 		 * Adjust default behavior of L.Draggable.
-		 * By default, L.Draggable overwrites the CSS3 distort transform 
+		 * By default, L.Draggable overwrites the CSS3 distort transform
 		 * that we want when it calls L.DomUtil.setPosition.
 		 */
 		this.dragging._updatePosition = function() {
@@ -163,7 +163,7 @@ L.DistortableImage.Edit = L.Handler.extend({
 		if (handlerName !== undefined) {
 			this[handlerName].call(this);
 		}
-	},	
+	},
 
 	_toggleRotateDistort: function() {
 		var map = this._overlay._map;
@@ -207,8 +207,8 @@ L.DistortableImage.Edit = L.Handler.extend({
 
 		map.removeLayer(this._handles[this._mode]);
 		/* Switch mode. */
-		if (this._mode === 'lock') { 
-			this._mode = 'distort'; 
+		if (this._mode === 'lock') {
+			this._mode = 'distort';
 			this._enableDragging();
 		} else {
 			this._mode = 'lock';
@@ -233,7 +233,7 @@ L.DistortableImage.Edit = L.Handler.extend({
 
 		/* Ensure that there is only ever one toolbar attached to each image. */
 		this._hideToolbar();
-		
+
 		var point;
 		if (event.containerPoint) { point = event.containerPoint; }
 		else { point = event.target._dragStartTarget._leaflet_pos; }
@@ -270,5 +270,5 @@ L.DistortableImageOverlay.addInitHook(function() {
 
 	this.on('remove', function () {
 		if (this.editing) { this.editing.disable(); }
-	});	
+	});
 });
